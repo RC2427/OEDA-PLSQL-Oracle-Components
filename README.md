@@ -7,5 +7,5 @@ This repository contains the Oracle Components Required for the OEDA tool.
 
 **Frontend Repository:** [oeda-frontend](https://github.com/RC2427/oeda-frontend)
 
-**Backend Repository:** [oeda](https://github.com/your-username/oeda)
+**Backend Repository:** [oeda](https://github.com/your-username/OEDA)
 
