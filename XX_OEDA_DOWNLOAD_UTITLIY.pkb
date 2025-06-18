@@ -63,7 +63,9 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTITLIY AS
   PROCEDURE validate_setup(p_seeded_vs IN VARCHAR2,
                            p_check_vs  IN VARCHAR2,
                            x_out_dir   OUT VARCHAR2,
-                           x_oeda_user OUT VARCHAR2,
+                           x_oeda_user OUT NUMBER,
+                           x_oeda_resp OUT NUMBER,
+                           x_oeda_appl OUT NUMBER,
                            x_status    OUT VARCHAR2,
                            x_error_msg OUT VARCHAR2) IS
     --
@@ -71,11 +73,14 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTITLIY AS
     lc_validate_status  VARCHAR2(1000);
     --
     lc_pair_check VARCHAR2(6000);
-    lc_sep        VARCHAR2(5000);
     lc_param      VARCHAR2(6000);
     lc_value      VARCHAR2(6000);
     lc_check_val  VARCHAR2(6000);
     ln_check_val  NUMBER;
+    --
+    ln_user_id    NUMBER;
+    ln_resp_id    NUMBER;
+    ln_app_id     NUMBER;
     --
     lc_error_msg    VARCHAR2(5000);
     ex_custom_issue EXCEPTION;
@@ -110,31 +115,10 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTITLIY AS
         lc_error_msg := 'validate_setup : OEDA_PROCESS_ENABLE paramter is not enabled';
         RAISE ex_custom_issue;
         --
-      ELSIF lc_param = 'OEDA_DIR' AND upper(lc_check_val) = lc_value THEN
+      ELSIF (lc_param = 'OEDA_DIR' OR lc_param = 'OEDA_USER' OR lc_param = 'OEDA_RESP_NAME') AND upper(lc_check_val) = 'VALUENOTSET' THEN
         --
-        lc_error_msg := 'validate_setup : OEDA_DIR paramter is not set. OUTPUT Dir not set in VS';
+        lc_error_msg := 'validate_setup : ' || lc_param || ' paramter is not set not set in VS';
         RAISE ex_custom_issue;
-        --   
-      ELSIF lc_param = 'OEDA_USER' AND upper(lc_check_val) = lc_value THEN
-        --
-        lc_error_msg := 'validate_setup : OEDA_USER paramter is not set. OEDA USER not Set in VS';
-        RAISE ex_custom_issue;
-        --
-      END IF;
-      --
-      IF lc_param = 'OEDA_DIR' THEN
-        --
-        SELECT COUNT(*)
-        INTO ln_check_val
-        FROM all_directories
-        WHERE directory_name = lc_check_val;
-        --
-        IF lc_check_val = 0 THEN
-          --
-          lc_error_msg := 'validate_setup : OEDA_DIR paramter is not set. OEDA_DIR not available in Oracle';
-          RAISE ex_custom_issue;
-          --
-        END IF;
         --
       END IF;
       --------
@@ -147,7 +131,7 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTITLIY AS
         --
         IF ln_check_val = 0 THEN
           --
-          lc_error_msg := 'validate_setup : OEDA_DIR paramter is not set. OEDA_DIR not available in Oracle';
+          lc_error_msg := 'validate_setup : OEDA_DIR is not defined/available in Oracle';
           RAISE ex_custom_issue;
           --
         END IF;
@@ -155,23 +139,51 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTITLIY AS
         x_out_dir := lc_check_val;
         --
       END IF;
+      --------
       --
-      IF lc_param = 'OEDA_DIR' THEN
+      IF lc_param = 'OEDA_USER' THEN
         --
-        SELECT COUNT(*)
-        INTO ln_check_val
+        SELECT COUNT(*),
+               user_id
+        INTO ln_check_val,ln_user_id
         FROM apps.fnd_user
-        WHERE user_name = lc_check_val;
+        WHERE user_name = lc_check_val
+        GROUP BY user_id;
         --
         IF ln_check_val = 0 THEN
           --
-          lc_error_msg := 'validate_setup : OEDA_USER paramter is not set. OEDA_USER not available in Oracle';
+          lc_error_msg := 'validate_setup :  OEDA_USER is not defined/available in Oracle';
           RAISE ex_custom_issue;
           --
         END IF;
         --
-        x_oeda_user := lc_check_val;
+        x_oeda_user := ln_user_id;
         --
+      END IF;
+      ---------
+      IF lc_param = 'OEDA_RESP_NAME' THEN
+        --
+        SELECT COUNT(*),
+               rvl.responsibility_id,
+               rvl.application_id
+        INTO ln_check_val,
+             ln_resp_id,
+             ln_app_id
+        FROM apps.fnd_responsibility_vl rvl
+        WHERE responsibility_name = lc_check_val
+        GROUP BY rvl.responsibility_id,
+                 rvl.application_id;
+        --
+        IF ln_check_val = 0 THEN
+          --
+          lc_error_msg := 'validate_setup : OEDA_RESP_NAME not defined/available in Oracle';
+          RAISE ex_custom_issue;
+          --
+        END IF;
+        --
+        x_oeda_resp := ln_resp_id;
+        x_oeda_appl := ln_app_id;
+        --  
       END IF;
       ---------
       lc_check_val := NULL;
@@ -191,8 +203,7 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTITLIY AS
     WHEN OTHERS THEN
       --
       x_error_msg := 'PL/SQL : Unexpected Error Occurred in validate_setup : ' ||
-                     SQLERRM || ' : ' ||
-                     dbms_utility.format_error_backtrace;
+                     SQLERRM || ' : ' || dbms_utility.format_error_backtrace;
       x_status    := 'FAILED';
       --
   END validate_setup;
@@ -244,14 +255,12 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTITLIY AS
     lc_error_message  VARCHAR2(32000);
     --
     lc_out_dir        VARCHAR2(5000);
-    lc_user_name      VARCHAR2(5000);
+    ln_user_id        NUMBER;
+    ln_resp_id        NUMBER;
+    ln_app_id         NUMBER;
     lc_validate_status VARCHAR2(5000);
     lc_validate_err    VARCHAR2(5000);
     --
-    ln_responsibility_id   NUMBER;
-    ln_resp_application_id NUMBER;
-    ln_security_group_id   NUMBER;
-    ln_user_id             NUMBER;
     ln_request_id          NUMBER;
     --
     lc_err_message         VARCHAR2(30000);
@@ -262,7 +271,9 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTITLIY AS
     validate_setup(p_seeded_vs => 'XX_OEDA_SEED_VALIDTION_VS',
                    p_check_vs  => 'XX_OEDA_USER_SET_VS',
                    x_out_dir   => lc_out_dir,
-                   x_oeda_user => lc_user_name,
+                   x_oeda_user => ln_user_id,
+                   x_oeda_resp => ln_resp_id,
+                   x_oeda_appl => ln_app_id,
                    x_status    => lc_validate_status,
                    x_error_msg => lc_validate_err);
     --
@@ -273,29 +284,45 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTITLIY AS
       --
     END IF;
     --
-    -- Check User Detail and set environment before script check and execution
+    dbms_output.put_line(ln_user_id || ' / ' || ln_resp_id || ' / ' || ln_app_id);
     --
-    lc_component_type := 'LDT';
-    lc_component_name := 'X';
-    lc_script         := '$FND_TOP/bin/FNDLOAD apps/apps 0 Y DOWNLOAD $FND_TOP/patch/115/import/afffload.lct XX_TEST_DOWNLAD_VS.ldt VALUE_SET FLEX_VALUE_SET_NAME="XX_TEST_DOWNLAD_VS"';
+    apps.fnd_global.apps_initialize(user_id      => ln_user_id,
+                                    resp_id      => ln_resp_id,
+                                    resp_appl_id => ln_app_id);
     --
+    dbms_output.put_line('Now running as ' || fnd_global.user_name || ' under ' || fnd_global.resp_name || '/' || fnd_global.application_name);
+    --
+    IF lc_script IS NULL THEN 
+      --
+      lc_err_message := 'Script parameter is null.. ' || chr(10) || 'cannot proceed for execution...' || chr(10) || 'aborting execution....';
+      RAISE ex_custom_issue;
+      --
+    END IF;
+    --
+    -- Calling a Concurrent program to the script and place it in our temp dir.
+    --
+    x_status := 'SUCCESS';
     --
   EXCEPTION
     --
     WHEN ex_custom_issue THEN
       --
-      x_status := 'FAILED';
-      x_error_message := 'Oracle PL/SQL :  ' || lc_err_message;
+      x_status        := 'FAILED';
+      x_error_message := 'Oracle PL/SQL : IN get_ebs_artifact' || lc_err_message;
       --
     WHEN no_data_found THEN
       --
-      x_status := 'FAILED';
-      x_error_message := 'Oracle PL/SQL : No Data Found Error Occurred in get_ebs_artifact : ' || SQLERRM || ' : ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+      x_status        := 'FAILED';
+      x_error_message := 'Oracle PL/SQL : No Data Found Error Occurred in get_ebs_artifact : ' ||
+                         SQLERRM || ' : ' ||
+                         dbms_utility.format_error_backtrace;
       --
     WHEN OTHERS THEN
       --
-      x_status := 'FAILED';
-      x_error_message := ' Oracle PL/SQL : Unexpected Error Occurred in get_ebs_artifact : ' || SQLERRM || ' : ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+      x_status        := 'FAILED';
+      x_error_message := 'Oracle PL/SQL : Unexpected Error Occurred in get_ebs_artifact : ' ||
+                         SQLERRM || ' : ' ||
+                         dbms_utility.format_error_backtrace;
       --
   END get_ebs_artifact;
 
