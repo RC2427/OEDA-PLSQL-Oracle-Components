@@ -130,7 +130,7 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTILITY AS
         lc_error_msg := 'validate_setup : OEDA_PROCESS_ENABLE paramter is not enabled';
         RAISE ex_custom_issue;
         --
-      ELSIF (lc_param IN ('OEDA_DIR','OEDA_USER','OEDA_RESP_NAME','OEDA_CONC_SH_NAME','OEDA_CONC_REQ_TIME','OEDA_DEL_FILE')) AND upper(lc_check_val) = 'VALUENOTSET' THEN
+      ELSIF lc_param != 'OEDA_PROCESS_ENABLE'  AND upper(lc_check_val) = 'VALUENOTSET' THEN
         --
         lc_error_msg := 'validate_setup : ' || lc_param || ' paramter is not set not set in VS';
         RAISE ex_custom_issue;
@@ -431,13 +431,11 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTILITY AS
                                     resp_id      => ln_resp_id,
                                     resp_appl_id => ln_app_id);
     --
-    log('Now running as ' || fnd_global.user_name || ' under ' ||
-        fnd_global.resp_name || '/' || fnd_global.application_name);
+    log('Now running as ' || fnd_global.user_name || ' under ' || fnd_global.resp_name || '/' || fnd_global.application_name);
     --
     IF lc_script IS NULL THEN
       --
-      lc_err_message := 'Script parameter is null.. ' || chr(10) ||
-                        'cannot proceed for execution...' || chr(10) ||
+      lc_err_message := 'Script parameter is null.. ' || chr(10) || 'cannot proceed for execution...' || chr(10) ||
                         'aborting execution....';
       RAISE ex_custom_issue;
       --
