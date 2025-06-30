@@ -122,7 +122,7 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTILITY AS
       lc_value      := regexp_substr(lc_pair_check, '[^=]+', 1, 2);
       --
       lc_check_val := check_if_process_enabled(lc_param,p_check_vs);
-      log('Current : ' || lc_param || ' : ' ||
+      log('Validating VS Parameter : ' || lc_param || ' : ' ||
                            lc_check_val);
       --
       IF lc_param = 'OEDA_PROCESS_ENABLE' AND upper(lc_check_val) != 'YES' THEN
@@ -362,7 +362,8 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTILITY AS
         --
       END IF;
       --
-       DBMS_SESSION.SLEEP(1);
+      lc_dev_status := NULL;
+      DBMS_SESSION.SLEEP(1);
       --
     END LOOP;
   
@@ -373,6 +374,7 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTILITY AS
   PROCEDURE get_ebs_artifact(p_component_type IN VARCHAR2,
                              p_file_name      IN VARCHAR2,
                              p_script         IN VARCHAR2,
+                             p_run_mode       IN VARCHAR2,
                              x_file_content   OUT BLOB,
                              x_status         OUT VARCHAR2,
                              x_error_message  OUT VARCHAR2) IS
@@ -380,6 +382,7 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTILITY AS
     lc_component_type VARCHAR2(20000) := p_component_type;
     lc_real_file_name VARCHAR2(20000) := p_file_name;
     lc_script         VARCHAR2(32000) := p_script;
+    ln_runmode        NUMBER := to_number(p_run_mode);
     lc_file_content   BFILE;
     lb_blob_file      BLOB;
     lc_error_message  VARCHAR2(32000);
@@ -450,7 +453,8 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTILITY AS
                                                 start_time  => SYSDATE,
                                                 sub_request => FALSE,
                                                 argument1   => lc_out_dir,
-                                                argument2   => lc_script);
+                                                argument2   => lc_script,
+                                                argument3   => ln_runmode);
     --
     IF ln_request_id = 0 THEN
       --
@@ -475,7 +479,7 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTILITY AS
       --
     ELSIF lc_request_check = 'ERROR' THEN
       --
-      lc_err_message := 'wait_for_request : Concurrent program execution was terminated';
+      lc_err_message := 'wait_for_request : Concurrent program execution was terminated with status : ' || lc_request_check;
       RAISE ex_custom_issue;
       --
     END IF;
@@ -544,4 +548,3 @@ CREATE OR REPLACE PACKAGE BODY XX_OEDA_DOWNLOAD_UTILITY AS
   END get_ebs_artifact;
 
 END XX_OEDA_DOWNLOAD_UTILITY;
-/

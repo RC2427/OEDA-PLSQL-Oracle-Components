@@ -12,8 +12,15 @@
 # Usage:
 #
 
+. /u01/install/APPS/fs1/EBSapps/appl/APPSEBSDB_apps.env
+
 DIR_PATH="$5"
 SH_SCRIPT="$6"
+RUN_MODE="$7"
+
+echo "Debug: PARAM1: ${DIR_PATH}"
+echo "Debug: PARAM2: ${SH_SCRIPT}"
+echo "Debug: PARAM3: ${RUN_MODE}"
 
 log() {
   echo "[`date '+%Y-%m-%d %H:%M:%S'`] $1"
@@ -23,15 +30,26 @@ log "Checking user access information...."
 
 if [ -z "$FCP_LOGIN" ]; then
     echo "Error: FCP_LOGIN environment variable is not set."
-    exit 1
+    exit 2
 fi
+
+FCP_USER="${FCP_LOGIN%/*}"
+FCP_PASS="${FCP_LOGIN#*/}"
+
+if [ -z "$FCP_USER" ] || [ -z "$FCP_PASS" ]; then
+    echo "Error: FCP_USER or FCP_PASS variable is not set."
+    exit 2
+fi
+
+echo "Debug: FCP_USER: ${FCP_USER}"
+echo "Debug: FCP_PASS: ${FCP_PASS}"
 
 log "user access info available...."
 log "Checking Program Paramateres...."
 
 if [ -z "$DIR_PATH" ] || [ -z "$SH_SCRIPT" ]; then
   log "USAGE: $0 <DIR_PATH> <SH_SCRIPT>"
-  exit 1
+  exit 2
 fi
 
 log "Starting OEDA download utility....."
@@ -39,15 +57,23 @@ log "Starting OEDA download utility....."
 cd $DIR_PATH
 if [ $? -ne 0 ]; then
     echo "Error: Could not change to directory ${DIR_PATH}."
-    exit 1
+    exit 2
 fi
 
-FINAL_COMMAND=$(echo "$SH_SCRIPT" | sed "s|\${fcp_login}|${FCP_LOGIN}|g")
+if [ $RUN_MODE -eq 0 ]; then
+  FINAL_COMMAND=$(echo "$SH_SCRIPT" | sed "s|\${fcp_login}|${FCP_LOGIN}|g")
+elif [ $RUN_MODE -eq 1 ]; then
+   FINAL_COMMAND=$(
+    printf '%s\n' "$SH_SCRIPT" |
+    sed -e "s|\${FCP_USER}|${FCP_USER}|g" \
+        -e "s|\${FCP_PASS}|${FCP_PASS}|g"
+  )
+fi
 
 echo "------------------------------------------------------------"
 echo "OEDA Shell Runner Script executing"
 echo "Executing in directory: $(pwd)"
-echo "Final command to be executed: ${FINAL_COMMAND}"
+# echo "Final command to be executed: ${FINAL_COMMAND}"
 echo "------------------------------------------------------------"
 
 eval "$FINAL_COMMAND"
@@ -58,5 +84,5 @@ if [ $EXEC_STATUS -eq 0 ]; then
     exit 0
 else
     log "Error: The executed command failed with exit status ${EXEC_STATUS}."
-    exit 1
+    exit 2
 fi
