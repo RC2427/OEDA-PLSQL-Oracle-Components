@@ -26,6 +26,7 @@ CREATE OR REPLACE PACKAGE XX_OEDA_DOWNLOAD_UTILITY AS
   PROCEDURE get_ebs_artifact(p_component_type IN VARCHAR2,
                              p_file_name      IN VARCHAR2,
                              p_script         IN VARCHAR2,
+                             p_run_mode       IN VARCHAR2,
                              x_file_content   OUT BLOB,
                              x_status         OUT VARCHAR2,
                              x_error_message  OUT VARCHAR2);
@@ -34,4 +35,4 @@ CREATE OR REPLACE PACKAGE XX_OEDA_DOWNLOAD_UTILITY AS
                                     p_check_vs  in VARCHAR2) RETURN VARCHAR2;
 
 END XX_OEDA_DOWNLOAD_UTILITY;
-/
+
