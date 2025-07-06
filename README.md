@@ -6,7 +6,7 @@ This Application will enable download of EBS code components like LDTs, WFX, tem
 ## OEDA ORACLE - Components
 This repository contains the Oracle Components Required for the OEDA tool and the required tar file for container side of OEDA.
 
-**========================================================================================**
+
 
 ## **Installation Guide for OEDA Backend and Frontend (Not Oracle Side)**
 
@@ -78,4 +78,3 @@ docker-compose restart backend
 (NOTE : From the next release valut engine name, valut context will be configurable as well as the path of the ORDS secrets.
 
 P.S Was to lazy change the default setup in application properties since I had already made the tar file and setup the relase for v.0.0.1 and it was already 2 AM so ... will see if actually do it in the next release)
-**========================================================================================**
