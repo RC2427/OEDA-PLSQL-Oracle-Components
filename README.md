@@ -12,37 +12,36 @@ This repository contains the Oracle Components Required for the OEDA tool and th
 
 **1. Download the prebuilt images bundle**
 
-curl -L -o oeda-stack-images.tar.gz
-https://github.com/RC2427/OEDA-PLSQL-Oracle-Components/releases/download/v1.0.0/oeda-stack-images.tar
+    curl -L -o oeda-stack-images.tar.gz
+    https://github.com/RC2427/OEDA-PLSQL-Oracle-Components/releases/download/v1.0.0/oeda-stack-images.tar
 
 **2. Unpack everything**
 
-tar xzf oeda-stack-images.tar.gz 
+    tar xzf oeda-stack-images.tar.gz 
 
 This will yield : oeda-stack-images.tar + docker-compose.yml + .env + vault/config/vault_config.hcl
 
 **3. Load all Docker images**
 
-docker load < oeda-stack-images.tar
+    docker load < oeda-stack-images.tar
 
 **4. Start Vault**
 
-docker-compose up -d vault
+    docker-compose up -d vault
 
 **5. Initialize Vault (5 keys, threshold 3)**
 
-docker-compose exec vault vault operator init
--key-shares=5
--key-threshold=3 \
-
-vault-init.txt
+    docker-compose exec vault vault operator init \
+      -key-shares=5 \
+      -key-threshold=3 \
+      > vault-init.txt
 
 **6. Unseal Vault (use any 3 of the keys)**
 
-for i in 1 2 3; do
-KEY=$(grep "Unseal Key $i:" vault-init.txt | awk '{print $NF}')
-docker-compose exec vault vault operator unseal $KEY
-done
+    for i in 1 2 3; do
+    KEY=$(grep "Unseal Key $i:" vault-init.txt | awk '{print $NF}')
+    docker-compose exec vault vault operator unseal $KEY
+    done
 
 **7. Update .env with your Root Token**
 
@@ -61,19 +60,19 @@ VAULT_TOKEN=to_your_generated_vault_token
 
 **8. Start the backend & frontend**
 
-docker-compose up -d backend frontend
+    docker-compose up -d backend frontend
 
 **9. Rotate your PostgreSQL password in Vault**
 
 (Do NOT continue using the initial password in .env)
 
-docker-compose exec vault vault kv put Secrets/oeda
+    docker-compose exec vault vault kv put Secrets/oeda \
+      postgres-password="<YOUR_NEW_STRONG_PASSWORD>"
 
-postgres-password="<YOUR_NEW_STRONG_PASSWORD>"
 
 **10. Restart the backend so it picks up the new DB password**
 
-docker-compose restart backend
+    docker-compose restart backend
 
 (NOTE : From the next release valut engine name, valut context will be configurable as well as the path of the ORDS secrets.
 
