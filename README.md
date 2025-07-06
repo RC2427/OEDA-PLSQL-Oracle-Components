@@ -77,4 +77,4 @@ docker-compose restart backend
 
 (NOTE : From the next release valut engine name, valut context will be configurable as well as the path of the ORDS secrets.
 
-P.S Was to lazy change the default setup in application properties since I had already made the tar file and setup the relase for v.0.0.1 and it was already 2 AM so ... will see if actually do it in the next release)
+P.S Was to lazy change the default setup in application properties since I had already made the tar file and setup the relase for v.0.0.1 and it was already 2 AM so ... will see if I actually do it in the next release)
