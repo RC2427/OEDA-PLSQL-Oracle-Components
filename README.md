@@ -75,8 +75,3 @@ This will yield : oeda-stack-images.tar + docker-compose.yml + .env + vault + co
 (NOTE : From the next release vault engine name, valut context will be configurable as well as the path of the ORDS secrets.
 
 P.S Was to lazy change the default setup in application properties since I had already made the ZIP file and setup the release for v.0.0.1 and it was already 2 AM so ... will see if I actually do it in the next release)
-
-
-(NOTE : From the next release vault engine name, valut context will be configurable as well as the path of the ORDS secrets.
-
-P.S Was to lazy change the default setup in application properties since I had already made the tar file and setup the relase for v.0.0.1-alpha and it was already 2 AM so ... will see if I actually do it in the next release)
