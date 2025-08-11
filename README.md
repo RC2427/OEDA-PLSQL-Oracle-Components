@@ -3,6 +3,13 @@ Artifact Download Utility for Oracle EBS Application.
 
 This Application will enable download of EBS code components like LDTs, WFX, template etc via a template driven app.
 
+<img width="1887" height="933" alt="image" src="https://github.com/user-attachments/assets/6f0577e7-414d-4150-8534-c32418be87db" />
+
+<img width="1655" height="458" alt="image" src="https://github.com/user-attachments/assets/e08d6b08-0a26-4ba6-b0f4-9a192686f7d5" />
+
+<img width="1685" height="913" alt="image" src="https://github.com/user-attachments/assets/6097a8c4-9dbe-4cb8-8eaa-cb3db60981e7" />
+
+
 ## OEDA ORACLE - Components
 This repository contains the Oracle Components Required for the OEDA tool and the required tar file for container side of OEDA.
 
